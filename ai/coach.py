@@ -9,22 +9,37 @@ client = OpenAI(
 )
 def review_text(text):
     prompt = f"""
-You are an expert English writing coach.
-Return ONLY valid JSON. No explanation. No markdown.
-Format:
+You are a professional English writing coach.
+
+Your job is to analyze the GIVEN TEXT ONLY.
+
+Do NOT give generic answers.
+Do NOT repeat same suggestions.
+Base everything strictly on the input text.
+
+Return ONLY valid JSON:
+
 {{
-  "corrected_text": "string",
-  "grammar_errors": [],
-  "suggestions": [],
-  "tone": "formal/casual/neutral",
-  "score": 0,
-  "summary": "string"
+  "corrected_text": "...",
+  "grammar_errors": ["specific mistakes found in THIS text"],
+  "suggestions": ["specific improvements based on THIS text"],
+  "tone": "formal / casual / neutral",
+  "score": 0-100,
+  "summary": "short feedback based on THIS text"
 }}
-Text:
+
+IMPORTANT RULES:
+- If text is good → say "no major issues"
+- If text is bad → point exact errors
+- DO NOT hallucinate problems
+- Be strict and accurate
+
+TEXT:
 {text}
 """
     response = client.chat.completions.create(
-        model="openai/gpt-3.5-turbo",
+        model="openai/gpt-4o-mini",
+        temperature=0.3,
         messages=[
             {"role": "system", "content": "You only return valid JSON."},
             {"role": "user", "content": prompt}
