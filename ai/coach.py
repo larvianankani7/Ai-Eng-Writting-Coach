@@ -1,20 +1,28 @@
-from ai.llm import get_llm
-def review_text(user_text: str):
-    llm = get_llm()
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+load_dotenv()
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+def review_text(text):
     prompt = f"""
     You are an expert English writing coach.
-    Task:
-    1. Correct grammar mistakes
-    2. Improve sentence structure
-    3. Make it more natural and fluent
-    4. Give short feedback
-    User text:
-    {user_text}
-    Return format:
-    Corrected Text:
-    ...
-    Feedback:
-    ...
+    Improve the following text:
+    - fix grammar
+    - improve clarity
+    - make it more professional
+    - keep meaning same
+
+    Text:
+    {text}
     """
-    response = llm.invoke(prompt)
-    return response
+    response = client.chat.completions.create(
+        model="openai/gpt-3.5-turbo",  # free/cheap option on OpenRouter
+        messages=[
+            {"role": "system", "content": "You are a helpful writing assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
