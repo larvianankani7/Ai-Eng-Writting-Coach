@@ -1,0 +1,11 @@
+streamlit
+langchain
+langchain-community
+langchain-core
+langchain-text-splitters
+openai
+ollama
+pypdf
+beautifulsoup4
+requests
+python-dotenv
