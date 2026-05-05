@@ -3,12 +3,11 @@ import streamlit as st
 from loaders.text_loader import load_text_file
 from loaders.pdf_loader import load_pdf
 from loaders.web_loader import load_web
-
 from processing.pipeline import process_text
 from ai.coach import review_text
 
 # -----------------------------
-# 🎨 PAGE CONFIG
+# ⚙️ PAGE CONFIG
 # -----------------------------
 st.set_page_config(
     page_title="AI Writing Coach",
@@ -17,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------
-# 🎨 MODERN UI STYLING
+# 🎨 MODERN UI STYLE
 # -----------------------------
 st.markdown("""
 <style>
@@ -27,43 +26,32 @@ body {
     color: white;
 }
 
-/* Main container */
 .block-container {
     padding: 2rem 3rem;
 }
 
-/* Title */
 h1 {
-    font-size: 2.8rem !important;
+    font-size: 2.5rem !important;
     font-weight: 700;
 }
 
-/* Cards */
 .card {
     background: rgba(255,255,255,0.06);
-    padding: 20px;
-    border-radius: 15px;
+    padding: 15px;
+    border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
 }
 
-/* Buttons */
 .stButton button {
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     color: white;
     border-radius: 10px;
-    padding: 0.6rem 1rem;
+    padding: 0.5rem 1rem;
     border: none;
-    transition: 0.2s ease-in-out;
 }
 
 .stButton button:hover {
     transform: scale(1.03);
-}
-
-/* Text area */
-textarea {
-    border-radius: 10px !important;
 }
 
 </style>
@@ -72,25 +60,20 @@ textarea {
 # -----------------------------
 # HEADER
 # -----------------------------
-st.title("✍️ AI Writing Coach")
-st.caption("Improve grammar • clarity • tone instantly using AI")
+st.title("✍️ AI English Writing Coach")
+st.caption("Improve grammar, clarity and tone using AI")
 
 # -----------------------------
 # SIDEBAR
 # -----------------------------
 with st.sidebar:
-    st.header("⚙️ Options")
-
-    input_mode = st.radio(
-        "Choose input type",
-        ["Text", "File", "Web URL"]
-    )
-
+    st.header("⚙️ Input Options")
+    input_mode = st.radio("Choose input type", ["Text", "File", "Web URL"])
     st.write("---")
-    st.info("💡 Tip: Clear sentences give better AI feedback")
+    st.info("💡 Tip: Clear input gives better AI feedback")
 
 # -----------------------------
-# INPUT HANDLING
+# INPUT AREA
 # -----------------------------
 text_data = ""
 
@@ -101,7 +84,7 @@ with col1:
     st.markdown("### 📝 Input")
 
     if input_mode == "Text":
-        text_data = st.text_area("Write or paste your text here", height=250)
+        text_data = st.text_area("Write your text here", height=250)
 
     elif input_mode == "File":
         file = st.file_uploader("Upload TXT or PDF", type=["txt", "pdf"])
@@ -115,50 +98,93 @@ with col1:
                     f.write(file.read())
                 text_data = load_pdf("temp.pdf")
 
-            st.success("File loaded successfully!")
+            st.success("File loaded!")
 
     elif input_mode == "Web URL":
-        url = st.text_input("Enter website URL")
+        url = st.text_input("Enter URL")
 
         if url:
             text_data = load_web(url)
             st.success("Web content loaded!")
 
 # -----------------------------
-# ACTION PANEL
+# INSIGHTS PANEL
 # -----------------------------
 with col2:
-    st.markdown("### 📊 Insights")
+    st.markdown("### 📊 Insights Panel")
 
     st.markdown("""
     <div class="card">
-    ✨ Grammar correction<br>
+    ✨ Grammar check<br>
     ✨ Sentence improvement<br>
     ✨ Tone analysis<br>
-    ✨ Writing feedback
+    ✨ AI suggestions
     </div>
     """, unsafe_allow_html=True)
 
-    run_btn = st.button("🚀 Analyze Writing")
+# -----------------------------
+# ACTION BUTTON
+# -----------------------------
+run_btn = st.button("🚀 Analyze Writing")
 
 # -----------------------------
-# AI PROCESSING
+# AI PROCESSING + OUTPUT
 # -----------------------------
 if run_btn:
 
-    if text_data.strip():
-
-        with st.spinner("AI is analyzing your writing..."):
-
-            # Step 1: process text
-            chunks = process_text(text_data)
-
-            # Step 2: AI review
-            result = review_text(chunks[0])
-
-        st.markdown("### 📌 AI Feedback")
-
-        st.success(result)
+    if not text_data.strip():
+        st.warning("Please enter some text first")
 
     else:
-        st.warning("Please enter or upload some text first")
+        with st.spinner("AI is analyzing your writing..."):
+
+            chunks = process_text(text_data)
+            result = review_text(chunks[0])
+
+        # -----------------------------
+        # RESULTS
+        # -----------------------------
+        st.markdown("## ✨ Corrected Text")
+        st.success(result["corrected_text"])
+
+        # COPY BUTTON
+        st.code(result["corrected_text"])
+
+        colA, colB = st.columns(2)
+
+        with colA:
+            st.markdown("## 📊 Score")
+            st.progress(result["score"] / 100)
+            st.write(f"{result['score']}/100")
+
+        with colB:
+            st.markdown("## 🎯 Tone")
+            st.info(result["tone"])
+
+        st.markdown("## 🚨 Grammar Mistakes")
+        if result["grammar_errors"]:
+            for g in result["grammar_errors"]:
+                st.write("•", g)
+        else:
+            st.success("No major grammar issues found 🎉")
+
+        st.markdown("## 💡 Suggestions")
+        if result["suggestions"]:
+            for s in result["suggestions"]:
+                st.write("•", s)
+
+        st.markdown("## 🧠 Summary")
+        st.write(result["summary"])
+
+        # -----------------------------
+        # BUTTONS
+        # -----------------------------
+        b1, b2 = st.columns(2)
+
+        with b1:
+            if st.button("📋 Copy Text"):
+                st.code(result["corrected_text"])
+
+        with b2:
+            if st.button("🔁 Re-analyze"):
+                st.rerun()
